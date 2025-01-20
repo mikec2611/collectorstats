@@ -34,6 +34,17 @@ local function GetAchievementColor(points)
     else return "a9a9a9" end                     -- dark gray
 end
 
+-- Function to format numbers with thousand separators
+local function FormatNumber(number)
+    local formatted = tostring(number)
+    local k
+    while true do
+        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+        if k == 0 then break end
+    end
+    return formatted
+end
+
 -- Function to safely add achievement points to tooltip
 local function AddAchievementToTooltip(tooltip, points, isSelf)
     if not tooltip or not points or tooltipUpdateQueued then return end
@@ -44,11 +55,20 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
         if tooltip:IsVisible() then
             local color = GetAchievementColor(points)
             
-            -- Add our lines
-            tooltip:AddDoubleLine(
+            -- Add our lines with increased font size
+            local line = tooltip:AddDoubleLine(
                 "|cffffd700Achievement Points|r",
-                string.format("|c%s%d|r", "ff" .. color, points)
+                string.format("|c%s%s|r", "ff" .. color, FormatNumber(points))
             )
+            
+            -- Get the last line (the one we just added) and increase its font size
+            local numLines = tooltip:NumLines()
+            local leftText = _G[tooltip:GetName().."TextLeft"..numLines]
+            local rightText = _G[tooltip:GetName().."TextRight"..numLines]
+            if leftText and rightText then
+                leftText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
+                rightText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
+            end
             
             tooltip:Show()  -- Refresh the tooltip
         end
