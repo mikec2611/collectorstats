@@ -8,6 +8,7 @@ local achievementCache = {}
 local currentInspectGUID = nil
 local pendingTooltips = {}
 local tooltipUpdateQueued = false
+local percentileData = {}
 
 -- Create custom font objects
 local function CreateFontObjects()
@@ -45,6 +46,44 @@ local function FormatNumber(number)
     return formatted
 end
 
+-- Function to load percentile data
+local function LoadPercentileData()
+    local data = {
+        {low = 0, high = 4999, percent = "100%"},
+        {low = 5000, high = 7999, percent = "90%"},
+        {low = 8000, high = 10999, percent = "80%"},
+        {low = 11000, high = 12999, percent = "70%"},
+        {low = 13000, high = 14999, percent = "60%"},
+        {low = 15000, high = 17499, percent = "50%"},
+        {low = 17500, high = 18999, percent = "40%"},
+        {low = 19000, high = 21999, percent = "30%"},
+        {low = 22000, high = 26999, percent = "20%"},
+        {low = 27000, high = 30999, percent = "10%"},
+        {low = 31000, high = 33999, percent = "5%"},
+        {low = 34000, high = 35999, percent = "3%"},
+        {low = 36000, high = 39599, percent = "2%"},
+        {low = 39600, high = 43000, percent = "1%"},
+        {low = 43000, high = 47999, percent = "0.5%"},
+        {low = 48000, high = 49999, percent = "0.1%"},
+        {low = 50000, high = 100000, percent = "0.01%"}
+    }
+    return data
+end
+
+-- Function to get percentile for points
+local function GetPercentile(points)
+    if not percentileData or #percentileData == 0 then
+        percentileData = LoadPercentileData()
+    end
+    
+    for _, bracket in ipairs(percentileData) do
+        if points >= bracket.low and points <= bracket.high then
+            return bracket.percent
+        end
+    end
+    return "100%"  -- Default fallback
+end
+
 -- Function to safely add achievement points to tooltip
 local function AddAchievementToTooltip(tooltip, points, isSelf)
     if not tooltip or not points or tooltipUpdateQueued then return end
@@ -54,11 +93,12 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
     local function updateTooltip()
         if tooltip:IsVisible() then
             local color = GetAchievementColor(points)
+            local percentile = GetPercentile(points)
             
             -- Add our lines with increased font size
             local line = tooltip:AddDoubleLine(
                 "|cffffd700Achievement Points|r",
-                string.format("|c%s%s|r", "ff" .. color, FormatNumber(points))
+                string.format("|c%s%s |cffffd700(top %s of players)|r", "ff" .. color, FormatNumber(points), percentile)
             )
             
             -- Get the last line (the one we just added) and increase its font size
