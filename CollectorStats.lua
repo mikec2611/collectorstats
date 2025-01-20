@@ -4,9 +4,7 @@ f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("INSPECT_ACHIEVEMENT_READY")
 
 -- Cache for achievement points
-local achievementCache = {}
 local currentInspectGUID = nil
-local pendingTooltips = {}
 local tooltipUpdateQueued = false
 local percentileData = {}
 
@@ -70,7 +68,7 @@ end
 -- Function to load percentile data
 local function LoadPercentileData()
     local data = {
-        {low = 0, high = 4999, percent = "100%"},
+        {low = 0, high = 4999, percent = "99%"},
         {low = 5000, high = 7999, percent = "90%"},
         {low = 8000, high = 10999, percent = "80%"},
         {low = 11000, high = 12999, percent = "70%"},
@@ -130,7 +128,7 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
     if isSelf then
         updateTooltip()
     else
-        C_Timer.After(0.15, updateTooltip)
+        C_Timer.After(0.2, updateTooltip)
     end
 end
 
@@ -148,42 +146,29 @@ local function OnEvent(self, event, addon)
             
             -- Check if it's a player
             if UnitIsPlayer(unit) then
-                local achievementPoints
-                local guid = UnitGUID(unit)
-                
                 -- If it's the player, use direct method
                 if UnitIsUnit(unit, "player") then
-                    achievementPoints = GetTotalAchievementPoints()
+                    local achievementPoints = GetTotalAchievementPoints()
                     if achievementPoints and achievementPoints > 0 then
                         AddAchievementToTooltip(tooltip, achievementPoints, true)
                     end
                 else
-                    -- For other players, check cache first
-                    if achievementCache[guid] then
-                        achievementPoints = achievementCache[guid]
-                        AddAchievementToTooltip(tooltip, achievementPoints, false)
-                    else
-                        -- Request inspection if not in cache
-                        if CanInspect(unit) and currentInspectGUID ~= guid then
-                            currentInspectGUID = guid
-                            pendingTooltips[guid] = tooltip
-                            ClearAchievementComparisonUnit()
-                            SetAchievementComparisonUnit(unit)
-                        end
+                    -- Request inspection for other players
+                    local guid = UnitGUID(unit)
+                    if CanInspect(unit) and currentInspectGUID ~= guid then
+                        currentInspectGUID = guid
+                        ClearAchievementComparisonUnit()
+                        SetAchievementComparisonUnit(unit)
                     end
                 end
             end
         end)
-        
-        -- Clear cache periodically (every 5 minutes)
-        C_Timer.NewTicker(300, function() achievementCache = {} end)
         
         -- Unregister the ADDON_LOADED event as we don't need it anymore
         f:UnregisterEvent("ADDON_LOADED")
     elseif event == "INSPECT_ACHIEVEMENT_READY" then
         local points = GetComparisonAchievementPoints()
         if points and points > 0 and currentInspectGUID then
-            achievementCache[currentInspectGUID] = points
             -- Update tooltip if it's still visible
             if GameTooltip:IsVisible() then
                 local _, unit = GameTooltip:GetUnit()
@@ -191,7 +176,6 @@ local function OnEvent(self, event, addon)
                     AddAchievementToTooltip(GameTooltip, points, false)
                 end
             end
-            pendingTooltips[currentInspectGUID] = nil
             currentInspectGUID = nil
         end
     end
