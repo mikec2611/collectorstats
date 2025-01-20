@@ -22,17 +22,38 @@ end
 
 -- Function to get color based on achievement points
 local function GetAchievementColor(points)
-    if points >= 50000 then return "ffd700"      -- golden
-    elseif points >= 45000 then return "ffc0cb"  -- light pink
-    elseif points >= 40000 then return "ff69b4"  -- hot pink
-    elseif points >= 35000 then return "da70d6"  -- orchid (lighter purple)
-    elseif points >= 30000 then return "9370db"  -- medium purple
-    elseif points >= 25000 then return "1e90ff"  -- dodger blue
-    elseif points >= 20000 then return "4169e1"  -- royal blue
-    elseif points >= 15000 then return "98fb98"  -- pale green
-    elseif points >= 10000 then return "32cd32"  -- lime green
-    elseif points >= 5000 then return "228b22"   -- forest green
-    else return "a9a9a9" end                     -- dark gray
+    -- Tier 7 (Gold) - Top 0.01%
+    if points >= 50000 then return "ffd700"      -- bright gold
+
+    -- Tier 6 (Red) - Top 0.1-0.5%
+    elseif points >= 48000 then return "ff3030"  -- bright red
+    elseif points >= 43000 then return "ff0000"  -- pure red
+
+    -- Tier 5 (Orange) - Top 1-2%
+    elseif points >= 39600 then return "ffa500"  -- bright orange
+    elseif points >= 36000 then return "ff8c00"  -- dark orange
+
+    -- Tier 4 (Pink) - Top 3-5%
+    elseif points >= 34000 then return "ff69b4"  -- hot pink
+    elseif points >= 31000 then return "ff1493"  -- deep pink
+
+    -- Tier 3 (Purple) - Top 10-20%
+    elseif points >= 27000 then return "da70d6"  -- orchid
+    elseif points >= 22000 then return "9932cc"  -- dark orchid
+
+    -- Tier 2 (Blue) - Top 30-50%
+    elseif points >= 19000 then return "00bfff"  -- deep sky blue
+    elseif points >= 17500 then return "1e90ff"  -- dodger blue
+    elseif points >= 15000 then return "4169e1"  -- royal blue
+
+    -- Tier 1 (Green) - Top 60-90%
+    elseif points >= 13000 then return "98fb98"  -- pale green
+    elseif points >= 11000 then return "32cd32"  -- lime green
+    elseif points >= 8000 then return "228b22"   -- forest green
+    elseif points >= 5000 then return "006400"   -- dark green
+
+    -- Tier 0 (Gray) - Bottom 10%
+    else return "bebebe" end                     -- bright gray
 end
 
 -- Function to format numbers with thousand separators
@@ -98,7 +119,7 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
             -- Add our lines with increased font size
             local line = tooltip:AddDoubleLine(
                 "|cffffd700Achievement Points|r",
-                string.format("|c%s%s |cffffd700(top %s of players)|r", "ff" .. color, FormatNumber(points), percentile)
+                string.format("|c%s%s (top %s of players)|r", "ff" .. color, FormatNumber(points), percentile)
             )
             
             -- Get the last line (the one we just added) and increase its font size
@@ -107,7 +128,7 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
             local rightText = _G[tooltip:GetName().."TextRight"..numLines]
             if leftText and rightText then
                 leftText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
-                rightText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
+                rightText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
             end
             
             tooltip:Show()  -- Refresh the tooltip
