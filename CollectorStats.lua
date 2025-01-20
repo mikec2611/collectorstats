@@ -44,13 +44,13 @@ local function GetAchievementColor(points)
     -- Tier 2 (Blue) - Top 30-50%
     elseif points >= 19000 then return "00bfff"  -- deep sky blue
     elseif points >= 17500 then return "1e90ff"  -- dodger blue
-    elseif points >= 15000 then return "4169e1"  -- royal blue
+    elseif points >= 15000 then return "0080ff"  -- bright royal blue
 
     -- Tier 1 (Green) - Top 60-90%
     elseif points >= 13000 then return "98fb98"  -- pale green
     elseif points >= 11000 then return "32cd32"  -- lime green
     elseif points >= 8000 then return "228b22"   -- forest green
-    elseif points >= 5000 then return "006400"   -- dark green
+    elseif points >= 5000 then return "207520"   -- lighter medium green
 
     -- Tier 0 (Gray) - Bottom 10%
     else return "bebebe" end                     -- bright gray
@@ -119,7 +119,7 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
             -- Add our lines with increased font size
             local line = tooltip:AddDoubleLine(
                 "|cffffd700Achievement Points|r",
-                string.format("|c%s%s (top %s of players)|r", "ff" .. color, FormatNumber(points), percentile)
+                string.format("|c%s%s (top %s)|r", "ff" .. color, FormatNumber(points), percentile)
             )
             
             -- Get the last line (the one we just added) and increase its font size
@@ -127,8 +127,8 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
             local leftText = _G[tooltip:GetName().."TextLeft"..numLines]
             local rightText = _G[tooltip:GetName().."TextRight"..numLines]
             if leftText and rightText then
-                leftText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
-                rightText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+                leftText:SetFont("Fonts\\FRIZQT__.TTF", 15, "THICKOUTLINE")
+                rightText:SetFont("Fonts\\FRIZQT__.TTF", 12, "THICKOUTLINE")
             end
             
             tooltip:Show()  -- Refresh the tooltip
@@ -139,7 +139,7 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
     if isSelf then
         updateTooltip()
     else
-        C_Timer.After(0.25, updateTooltip)
+        C_Timer.After(0.15, updateTooltip)
     end
 end
 
