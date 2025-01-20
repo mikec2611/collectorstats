@@ -3,189 +3,92 @@ local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("INSPECT_ACHIEVEMENT_READY")
 
--- Cache for achievement points
+-- Cache for inspected players
 local currentInspectGUID = nil
-local tooltipUpdateQueued = false
-local percentileData = {}
-local achievementPointsCache = {}  -- Add cache for achievement points
+local achievementCache = {}
 
--- Create custom font objects
-local function CreateFontObjects()
-    local labelFont = CreateFont("CollectorStatsLabelFont")
-    labelFont:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-    labelFont:SetTextColor(1, 0.84, 0) -- Gold color
+-- Combined tier data for colors and percentiles
+local tierData = {
+    {points = 50000, color = "ffd700", percent = "0.01%"},  -- Gold
+    {points = 48000, color = "ff3030", percent = "0.1%"},   -- Bright Red
+    {points = 43000, color = "ff0000", percent = "0.5%"},   -- Pure Red
+    {points = 39600, color = "ffa500", percent = "1%"},     -- Bright Orange
+    {points = 36000, color = "ff8c00", percent = "2%"},     -- Dark Orange
+    {points = 34000, color = "ff69b4", percent = "3%"},     -- Hot Pink
+    {points = 31000, color = "ff1493", percent = "5%"},     -- Deep Pink
+    {points = 27000, color = "da70d6", percent = "10%"},    -- Orchid
+    {points = 22000, color = "9932cc", percent = "20%"},    -- Dark Orchid
+    {points = 19000, color = "00bfff", percent = "30%"},    -- Deep Sky Blue
+    {points = 17500, color = "1e90ff", percent = "40%"},    -- Dodger Blue
+    {points = 15000, color = "0080ff", percent = "50%"},    -- Royal Blue
+    {points = 13000, color = "98fb98", percent = "60%"},    -- Pale Green
+    {points = 11000, color = "32cd32", percent = "70%"},    -- Lime Green
+    {points = 8000, color = "228b22", percent = "80%"},     -- Forest Green
+    {points = 5000, color = "207520", percent = "90%"},     -- Medium Green
+    {points = 0, color = "bebebe", percent = "99%"}         -- Gray
+}
 
-    local valueFont = CreateFont("CollectorStatsValueFont")
-    valueFont:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+-- Get color and percentile for achievement points
+local function GetAchievementInfo(points)
+    for _, tier in ipairs(tierData) do
+        if points >= tier.points then
+            return tier.color, tier.percent
+        end
+    end
+    return tierData[#tierData].color, tierData[#tierData].percent
 end
 
--- Function to get color based on achievement points
-local function GetAchievementColor(points)
-    -- Tier 7 (Gold) - Top 0.01%
-    if points >= 50000 then return "ffd700"      -- bright gold
-
-    -- Tier 6 (Red) - Top 0.1-0.5%
-    elseif points >= 48000 then return "ff3030"  -- bright red
-    elseif points >= 43000 then return "ff0000"  -- pure red
-
-    -- Tier 5 (Orange) - Top 1-2%
-    elseif points >= 39600 then return "ffa500"  -- bright orange
-    elseif points >= 36000 then return "ff8c00"  -- dark orange
-
-    -- Tier 4 (Pink) - Top 3-5%
-    elseif points >= 34000 then return "ff69b4"  -- hot pink
-    elseif points >= 31000 then return "ff1493"  -- deep pink
-
-    -- Tier 3 (Purple) - Top 10-20%
-    elseif points >= 27000 then return "da70d6"  -- orchid
-    elseif points >= 22000 then return "9932cc"  -- dark orchid
-
-    -- Tier 2 (Blue) - Top 30-50%
-    elseif points >= 19000 then return "00bfff"  -- deep sky blue
-    elseif points >= 17500 then return "1e90ff"  -- dodger blue
-    elseif points >= 15000 then return "0080ff"  -- bright royal blue
-
-    -- Tier 1 (Green) - Top 60-90%
-    elseif points >= 13000 then return "98fb98"  -- pale green
-    elseif points >= 11000 then return "32cd32"  -- lime green
-    elseif points >= 8000 then return "228b22"   -- forest green
-    elseif points >= 5000 then return "207520"   -- lighter medium green
-
-    -- Tier 0 (Gray) - Bottom 10%
-    else return "bebebe" end                     -- bright gray
-end
-
--- Function to format numbers with thousand separators
+-- Format numbers with commas
 local function FormatNumber(number)
-    local formatted = tostring(number)
-    local k
-    while true do
-        formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-        if k == 0 then break end
-    end
-    return formatted
+    return tostring(number):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
 end
 
--- Function to load percentile data
-local function LoadPercentileData()
-    local data = {
-        {low = 0, high = 4999, percent = "99%"},
-        {low = 5000, high = 7999, percent = "90%"},
-        {low = 8000, high = 10999, percent = "80%"},
-        {low = 11000, high = 12999, percent = "70%"},
-        {low = 13000, high = 14999, percent = "60%"},
-        {low = 15000, high = 17499, percent = "50%"},
-        {low = 17500, high = 18999, percent = "40%"},
-        {low = 19000, high = 21999, percent = "30%"},
-        {low = 22000, high = 26999, percent = "20%"},
-        {low = 27000, high = 30999, percent = "10%"},
-        {low = 31000, high = 33999, percent = "5%"},
-        {low = 34000, high = 35999, percent = "3%"},
-        {low = 36000, high = 39599, percent = "2%"},
-        {low = 39600, high = 43000, percent = "1%"},
-        {low = 43000, high = 47999, percent = "0.5%"},
-        {low = 48000, high = 49999, percent = "0.1%"},
-        {low = 50000, high = 100000, percent = "0.01%"}
-    }
-    return data
+-- Add achievement points to tooltip
+local function UpdateTooltip(tooltip, points)
+    if not tooltip or not points then return end
+    
+    local color, percentile = GetAchievementInfo(points)
+    tooltip:AddDoubleLine(
+        "|cffffd700Achievement Points|r",
+        string.format("|c%s%s (top %s)|r", "ff" .. color, FormatNumber(points), percentile)
+    )
+    tooltip:Show()
 end
 
--- Function to get percentile for points
-local function GetPercentile(points)
-    if not percentileData or #percentileData == 0 then
-        percentileData = LoadPercentileData()
-    end
-    
-    for _, bracket in ipairs(percentileData) do
-        if points >= bracket.low and points <= bracket.high then
-            return bracket.percent
-        end
-    end
-    return "100%"  -- Default fallback
-end
-
--- Function to safely add achievement points to tooltip
-local function AddAchievementToTooltip(tooltip, points, isSelf, guid)
-    if not tooltip or not points or tooltipUpdateQueued then return end
-    
-    tooltipUpdateQueued = true
-    
-    -- Cache the achievement points if we have a GUID
-    if guid then
-        achievementPointsCache[guid] = points
-    end
-    
-    local function updateTooltip()
-        if tooltip:IsVisible() then
-            local color = GetAchievementColor(points)
-            local percentile = GetPercentile(points)
-            
-            -- Add our lines
-            tooltip:AddDoubleLine(
-                "|cffffd700Achievement Points|r",
-                string.format("|c%s%s (top %s)|r", "ff" .. color, FormatNumber(points), percentile)
-            )
-            
-            tooltip:Show()  -- Refresh the tooltip
-        end
-        tooltipUpdateQueued = false
-    end
-    updateTooltip()
-end
-
--- Initialize addon
-local function OnEvent(self, event, addon)
-    print("run")
-    if event == "ADDON_LOADED" and addon == "CollectorStats" then
-        -- Initialize saved variables if needed
-        CollectorStatsDB = CollectorStatsDB or {}
-        CreateFontObjects()
-        
-        -- Hook the tooltip using TooltipDataProcessor
+-- Event handler
+f:SetScript("OnEvent", function(self, event, arg1)
+    if event == "ADDON_LOADED" and arg1 == "CollectorStats" then
+        -- Hook tooltip
         TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip)
             local _, unit = tooltip:GetUnit()
-            if not unit then return end
+            if not unit or not UnitIsPlayer(unit) then return end
             
-            -- Check if it's a player
-            if UnitIsPlayer(unit) then
-                -- If it's the player, use direct method
-                if UnitIsUnit(unit, "player") then
-                    local achievementPoints = GetTotalAchievementPoints()
-                    if achievementPoints and achievementPoints > 0 then
-                        AddAchievementToTooltip(tooltip, achievementPoints, true)
-                    end
-                else
-                    -- Check cache first
-                    local guid = UnitGUID(unit)
-                    if achievementPointsCache[guid] then
-                        AddAchievementToTooltip(tooltip, achievementPointsCache[guid], false, guid)
-                    elseif CanInspect(unit) and currentInspectGUID ~= guid then
-                        currentInspectGUID = guid
-                        ClearAchievementComparisonUnit()
-                        SetAchievementComparisonUnit(unit)
-                    end
+            if UnitIsUnit(unit, "player") then
+                UpdateTooltip(tooltip, GetTotalAchievementPoints())
+            else
+                local guid = UnitGUID(unit)
+                if achievementCache[guid] then
+                    UpdateTooltip(tooltip, achievementCache[guid])
+                elseif CanInspect(unit) and currentInspectGUID ~= guid then
+                    currentInspectGUID = guid
+                    ClearAchievementComparisonUnit()
+                    SetAchievementComparisonUnit(unit)
                 end
             end
         end)
         
-        -- Unregister the ADDON_LOADED event as we don't need it anymore
         f:UnregisterEvent("ADDON_LOADED")
     elseif event == "INSPECT_ACHIEVEMENT_READY" then
         local points = GetComparisonAchievementPoints()
         if points and points > 0 and currentInspectGUID then
-            -- Cache the points
-            achievementPointsCache[currentInspectGUID] = points
-            
-            -- Update tooltip if it's still visible
+            achievementCache[currentInspectGUID] = points
             if GameTooltip:IsVisible() then
                 local _, unit = GameTooltip:GetUnit()
                 if unit and UnitGUID(unit) == currentInspectGUID then
-                    AddAchievementToTooltip(GameTooltip, points, false, currentInspectGUID)
+                    UpdateTooltip(GameTooltip, points)
                 end
             end
             currentInspectGUID = nil
         end
     end
-end
-
-f:SetScript("OnEvent", OnEvent) 
+end) 
