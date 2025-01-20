@@ -44,6 +44,7 @@ local function FormatNumber(number)
 end
 
 -- Add achievement points to tooltip
+local isProcessingSecondary = false
 local function UpdateTooltip(tooltip, points)
     if not tooltip or not points then return end
 
@@ -52,7 +53,27 @@ local function UpdateTooltip(tooltip, points)
         "|cffffd700Achievement Points:|r",
         string.format("|c%s%s (top %s)|r", "ff" .. color, FormatNumber(points), percentile)
     )
-    tooltip:Show()
+    
+    -- Only show on secondary trigger
+    if isProcessingSecondary then
+        tooltip:Show()
+    end
+    
+    -- Trigger a second mouseover after a short delay, but only if not already processing a secondary update
+    if not isProcessingSecondary then
+        isProcessingSecondary = true
+        C_Timer.After(0.1, function()
+            if tooltip:IsVisible() then
+                local _, unit = tooltip:GetUnit()
+                if unit then
+                    -- Force tooltip refresh
+                    GameTooltip_SetDefaultAnchor(tooltip, UIParent)
+                    tooltip:SetUnit(unit)
+                end
+            end
+            isProcessingSecondary = false
+        end)
+    end
 end
 
 -- Event handler
