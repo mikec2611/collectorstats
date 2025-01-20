@@ -1,0 +1,8 @@
+## Interface: 100200
+## Title: CollectorStats
+## Notes: Displays achievement points when hovering over players
+## Author: Your Name
+## Version: 1.0
+## SavedVariables: CollectorStatsDB
+
+CollectorStats.lua 
