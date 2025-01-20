@@ -10,12 +10,12 @@ local achievementCache = {}
 -- Combined tier data for colors and percentiles
 local tierData = {
     {points = 50000, color = "ffd700", percent = "0.01%"},  -- Gold
-    {points = 48000, color = "ff3030", percent = "0.1%"},   -- Bright Red
-    {points = 43000, color = "ff0000", percent = "0.5%"},   -- Pure Red
-    {points = 39600, color = "ffa500", percent = "1%"},     -- Bright Orange
-    {points = 36000, color = "ff8c00", percent = "2%"},     -- Dark Orange
-    {points = 34000, color = "ff69b4", percent = "3%"},     -- Hot Pink
-    {points = 31000, color = "ff1493", percent = "5%"},     -- Deep Pink
+    {points = 48000, color = "ff1493", percent = "0.1%"},   -- Deep Pink
+    {points = 43000, color = "ff3030", percent = "0.5%"},   -- Bright Red
+    {points = 39600, color = "ff0000", percent = "1%"},     -- Pure Red
+    {points = 36000, color = "ff69b4", percent = "2%"},     -- Hot Pink
+    {points = 34000, color = "ffa500", percent = "3%"},     -- Bright Orange
+    {points = 31000, color = "ff8c00", percent = "5%"},     -- Dark Orange
     {points = 27000, color = "da70d6", percent = "10%"},    -- Orchid
     {points = 22000, color = "9932cc", percent = "20%"},    -- Dark Orchid
     {points = 19000, color = "00bfff", percent = "30%"},    -- Deep Sky Blue
@@ -46,10 +46,10 @@ end
 -- Add achievement points to tooltip
 local function UpdateTooltip(tooltip, points)
     if not tooltip or not points then return end
-    
+
     local color, percentile = GetAchievementInfo(points)
     tooltip:AddDoubleLine(
-        "|cffffd700Achievement Points|r",
+        "|cffffd700Achievement Points:|r",
         string.format("|c%s%s (top %s)|r", "ff" .. color, FormatNumber(points), percentile)
     )
     tooltip:Show()
