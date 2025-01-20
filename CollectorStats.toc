@@ -1,8 +1,9 @@
 ## Interface: 100200
 ## Title: CollectorStats
-## Notes: Displays achievement points when hovering over players
-## Author: Your Name
+## Notes: Displays collector data in the tooltip.
+## Author: Deiner-Illidan
 ## Version: 1.0
 ## SavedVariables: CollectorStatsDB
+## IconTexture: Interface\Icons\achievement_quests_completed_daily_x5
 
 CollectorStats.lua 

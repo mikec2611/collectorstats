@@ -13,11 +13,11 @@ local percentileData = {}
 -- Create custom font objects
 local function CreateFontObjects()
     local labelFont = CreateFont("CollectorStatsLabelFont")
-    labelFont:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+    labelFont:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
     labelFont:SetTextColor(1, 0.84, 0) -- Gold color
 
     local valueFont = CreateFont("CollectorStatsValueFont")
-    valueFont:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+    valueFont:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 end
 
 -- Function to get color based on achievement points
@@ -116,20 +116,11 @@ local function AddAchievementToTooltip(tooltip, points, isSelf)
             local color = GetAchievementColor(points)
             local percentile = GetPercentile(points)
             
-            -- Add our lines with increased font size
-            local line = tooltip:AddDoubleLine(
+            -- Add our lines
+            tooltip:AddDoubleLine(
                 "|cffffd700Achievement Points|r",
                 string.format("|c%s%s (top %s)|r", "ff" .. color, FormatNumber(points), percentile)
             )
-            
-            -- Get the last line (the one we just added) and increase its font size
-            local numLines = tooltip:NumLines()
-            local leftText = _G[tooltip:GetName().."TextLeft"..numLines]
-            local rightText = _G[tooltip:GetName().."TextRight"..numLines]
-            if leftText and rightText then
-                leftText:SetFont("Fonts\\FRIZQT__.TTF", 15, "THICKOUTLINE")
-                rightText:SetFont("Fonts\\FRIZQT__.TTF", 12, "THICKOUTLINE")
-            end
             
             tooltip:Show()  -- Refresh the tooltip
         end
